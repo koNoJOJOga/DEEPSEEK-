@@ -1,10 +1,37 @@
 # 在单个T4上对Qwen2.5 0.5B进行完整的GRPO微调
 
-为了让这些代码能在colab上运行做了很多调整，使GRPO完整微调Qwen2.5-0.5-Instruct能够在单个T4 GPU上运行，因此可以在免费的Google Colab中运行。
-
-这段代码使用VLLm进行快速推理，并且在批处理和完成组大小上不做妥协。
+原版代码为了让这些代码能在colab上运行做了很多调整，使GRPO完整微调Qwen2.5-0.5-Instruct能够在单个T4 GPU上运行，因此可以在免费的Google Colab中运行。使用VLLm进行快速推理，并且在批处理和完成组大小上不做妥协。
 
 通过这种设置，可以在单个T4 GPU上仅用约150步（约30分钟）就将Qwen2.5-0.5B-Instruct的gsm8k评估结果从22.4%提高到48.6%。
+
+但是我的实现`train-checkpoint-900.ipynb`是没有使用vllm的
+```python
+training_args = GRPOConfig(
+    output_dir=output_dir,
+    run_name=run_name,
+    learning_rate=5e-6,
+    adam_beta1 = 0.9,
+    adam_beta2 = 0.99,
+    weight_decay = 0.1,
+    warmup_ratio = 0.1,
+    lr_scheduler_type='cosine',
+    logging_steps=1,
+    bf16=True,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=4,
+    num_generations=16,
+    max_prompt_length=256,
+    max_completion_length=200,
+    num_train_epochs=1,
+    save_steps=100,
+    max_grad_norm=0.1,
+    log_on_each_node=False,
+    use_vllm=False,
+    vllm_gpu_memory_utilization=.3,
+    vllm_device="cuda:0",
+    report_to="none"
+)
+```
 
 以下是使用的一些重要优化：
 
